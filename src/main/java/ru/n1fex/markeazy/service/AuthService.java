@@ -1,6 +1,7 @@
 package ru.n1fex.markeazy.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +19,10 @@ import ru.n1fex.markeazy.exception.AppError;
 import ru.n1fex.markeazy.exception.EmailAlreadyExistsException;
 import ru.n1fex.markeazy.util.JwtTokenUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -41,12 +46,14 @@ public class AuthService {
                     new AppError(HttpStatus.BAD_GATEWAY.value(), e.getMessage()), HttpStatus.BAD_GATEWAY
             );
         }
-        UserDetails userDetails = personService.loadUserByUsername(authRequest.getEmail());
-        String token = jwtTokenUtils.generateToken(userDetails);
+        //UserDetails userDetails = personService.loadUserByUsername(authRequest.getEmail());
+        Person person = personService.findByEmail(authRequest.getEmail()).get();
+        String token = jwtTokenUtils.generateToken(person);
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
     public ResponseEntity<?> registerUser(@RequestBody RegistrationPersonDto personDto) {
+        log.info(personDto.toString());
         if (!personDto.getPassword().equals(personDto.getConfirmPassword())) {
             return new ResponseEntity<>(
                     new AppError(HttpStatus.BAD_REQUEST.value(), "Пароли не совпадают"),
@@ -56,11 +63,12 @@ public class AuthService {
 
         try {
             Person person = personService.createNewUser(personDto);
-            return ResponseEntity.ok(new PersonDto(
-                    person.getId(),
-                    person.getName(),
-                    person.getEmail()
-            ));
+            //UserDetails userDetails = personService.loadUserByUsername(person.getEmail());
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("user", new PersonDto(person));
+            map.put("token", jwtTokenUtils.generateToken(person));
+            return ResponseEntity.ok(map);
         } catch (EmailAlreadyExistsException e) {
             return new ResponseEntity<>(
                     new AppError(HttpStatus.BAD_REQUEST.value(), "Пользователь с такой почтой уже существует"),
