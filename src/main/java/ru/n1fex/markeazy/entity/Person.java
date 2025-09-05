@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class Person {
     private String name;
     private String email;
     private String password;
+    private Date registrationDate;
 
     @ManyToMany
     @JoinTable(

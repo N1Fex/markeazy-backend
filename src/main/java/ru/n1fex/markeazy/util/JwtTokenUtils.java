@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import ru.n1fex.markeazy.entity.Person;
+import ru.n1fex.markeazy.entity.Role;
 
 import java.security.Key;
 import java.time.Duration;
@@ -15,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenUtils {
@@ -26,11 +29,13 @@ public class JwtTokenUtils {
     private Duration lifetime;
 
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(Person person) {
         Map<String, Object> claims = new HashMap<>();
 
-        List<String> roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+        List<String> roles = person.getRoles().stream().map(Role::getName).toList();
         claims.put("roles", roles);
+        claims.put("name", person.getName());
+        claims.put("registration_date", person.getRegistrationDate());
 
         Date now = new Date();
         Date expDate = new Date(now.getTime() + lifetime.toMillis());
@@ -39,7 +44,7 @@ public class JwtTokenUtils {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(person.getEmail())
                 .setIssuedAt(now)
                 .setExpiration(expDate)
                 .signWith(key, SignatureAlgorithm.HS256)
