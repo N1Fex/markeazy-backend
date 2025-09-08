@@ -1,20 +1,18 @@
 package ru.n1fex.markeazy.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Date;
 import java.util.Set;
 
 @RequiredArgsConstructor
-@Setter
-@Getter
+@Data
 @Entity
-public class Person {
+@Table(name = "users")
+public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String email;
@@ -23,8 +21,8 @@ public class Person {
 
     @ManyToMany
     @JoinTable(
-        name="person_role",
-        joinColumns = @JoinColumn(name = "person_id"),
+        name="users_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name="role_id")
     )
     private Set<Role> roles;
