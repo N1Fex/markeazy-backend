@@ -2,9 +2,6 @@ package ru.n1fex.markeazy.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.context.annotation.Lazy;
-
-import java.util.List;
 
 @Entity
 @Data

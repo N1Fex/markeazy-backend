@@ -1,30 +1,27 @@
 package ru.n1fex.markeazy.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.n1fex.markeazy.dto.ProductCardDto;
 import ru.n1fex.markeazy.entity.Product;
-import ru.n1fex.markeazy.entity.ProductCard;
 import ru.n1fex.markeazy.service.ProductService;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/product")
 @CrossOrigin(originPatterns = "http:/*:3000")
 public class ProductController {
 
     private final ProductService productService;
 
-    @Autowired
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
 
     @GetMapping(value = {"", "/"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    private ResponseEntity<List<ProductCard>> getProducts(@RequestParam(required = false) Integer limit) {
+    private ResponseEntity<List<ProductCardDto>> getProducts(@RequestParam(required = false) Integer limit) {
         return ResponseEntity.ok(productService.getRandomProducts(limit != null ? limit : 10));
     }
 
@@ -37,7 +34,7 @@ public class ProductController {
     }
 
     @GetMapping(value="/search", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<ProductCard>> searchProduct(
+    public ResponseEntity<List<ProductCardDto>> searchProduct(
             @RequestParam(value = "query") String query,
             @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset,
             @RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit) {

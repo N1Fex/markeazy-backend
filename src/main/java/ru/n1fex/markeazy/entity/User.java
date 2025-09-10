@@ -4,9 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
-@RequiredArgsConstructor
 @Data
 @Entity
 @Table(name = "users")
@@ -26,5 +26,11 @@ public class User {
         inverseJoinColumns = @JoinColumn(name="role_id")
     )
     private Set<Role> roles;
+
+    @OneToMany(mappedBy = "consumer")
+    List<Order> orders;
+
+    @OneToMany(mappedBy = "user")
+    List<Cart> cartProducts;
 
 }
