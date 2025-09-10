@@ -7,16 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.n1fex.markeazy.dto.JwtRequest;
 import ru.n1fex.markeazy.dto.JwtResponse;
-import ru.n1fex.markeazy.dto.PersonDto;
-import ru.n1fex.markeazy.dto.RegistrationPersonDto;
-import ru.n1fex.markeazy.entity.Person;
+import ru.n1fex.markeazy.dto.RegistrationUserDto;
+import ru.n1fex.markeazy.entity.User;
 import ru.n1fex.markeazy.exception.AppError;
 import ru.n1fex.markeazy.exception.EmailAlreadyExistsException;
+import ru.n1fex.markeazy.exception.SomethingWentWrongException;
+import ru.n1fex.markeazy.mapper.UserMapper;
 import ru.n1fex.markeazy.util.JwtTokenUtils;
 
 import java.util.HashMap;
@@ -27,54 +27,29 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final PersonService personService;
+    private final UserService userService;
     private final JwtTokenUtils jwtTokenUtils;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
 
     public ResponseEntity<?> createAuthToken(@RequestBody JwtRequest authRequest) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
-            );
-        } catch (BadCredentialsException e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.UNAUTHORIZED.value(), "Неправильная почта или пароль!"),
-                    HttpStatus.UNAUTHORIZED
-            );
-        } catch (Exception e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.BAD_GATEWAY.value(), e.getMessage()), HttpStatus.BAD_GATEWAY
-            );
-        }
-        //UserDetails userDetails = personService.loadUserByUsername(authRequest.getEmail());
-        Person person = personService.findByEmail(authRequest.getEmail()).get();
-        String token = jwtTokenUtils.generateToken(person);
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
+        );
+
+        User user = userService.findByEmail(authRequest.getEmail()).orElseThrow(SomethingWentWrongException::new);
+        String token = jwtTokenUtils.generateToken(user);
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
-    public ResponseEntity<?> registerUser(@RequestBody RegistrationPersonDto personDto) {
-        log.info(personDto.toString());
-        if (!personDto.getPassword().equals(personDto.getConfirmPassword())) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.BAD_REQUEST.value(), "Пароли не совпадают"),
-                    HttpStatus.BAD_REQUEST
-            );
-        }
+    public ResponseEntity<?> registerUser(@RequestBody RegistrationUserDto userDto) {
+        User user = userService.createNewUser(userDto);
 
-        try {
-            Person person = personService.createNewUser(personDto);
-            //UserDetails userDetails = personService.loadUserByUsername(person.getEmail());
+        Map<String, Object> map = new HashMap<>();
+        map.put("user", userMapper.toUserDto(user));
+        map.put("token", jwtTokenUtils.generateToken(user));
 
-            Map<String, Object> map = new HashMap<>();
-            map.put("user", new PersonDto(person));
-            map.put("token", jwtTokenUtils.generateToken(person));
-            return ResponseEntity.ok(map);
-        } catch (EmailAlreadyExistsException e) {
-            return new ResponseEntity<>(
-                    new AppError(HttpStatus.BAD_REQUEST.value(), "Пользователь с такой почтой уже существует"),
-                    HttpStatus.BAD_REQUEST
-            );
-        }
+        return ResponseEntity.ok(map);
     }
 
 }
