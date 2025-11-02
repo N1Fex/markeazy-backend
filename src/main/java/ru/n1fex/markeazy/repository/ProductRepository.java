@@ -12,12 +12,18 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT p " +
+    @Query("SELECT p,s " +
             "FROM Product p " +
-            "WHERE (p.id < 898) " +
+            "JOIN Seller s ON p.seller.id = s.id " +
             "ORDER BY RANDOM() " +
             "LIMIT :limited")
     List<Product> getRandomProductsLimited(@Param("limited") int limit);
 
     List<Product> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+
+    @Query("SELECT p, s " +
+            "FROM Product p " +
+            "INNER JOIN Seller s ON p.seller.id = s.id " +
+            "WHERE p.id IN :ids" )
+    List<Product> getAllByIdIn(@Param("ids") List<Long> ids);
 }

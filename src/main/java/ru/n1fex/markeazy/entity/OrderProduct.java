@@ -10,17 +10,9 @@ import ru.n1fex.markeazy.entity.idcomposit.OrderProductId;
 public class OrderProduct {
 
     @EmbeddedId
-    private OrderProductId id;
+    private OrderProductId pk;
 
     private Integer quantity;
     private Integer price;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("orderId")
-    private Order order;
-
-    @ManyToOne
-    @MapsId("productId")
-    private Product product;
 
 }

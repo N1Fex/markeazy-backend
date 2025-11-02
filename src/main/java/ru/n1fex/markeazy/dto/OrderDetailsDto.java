@@ -6,14 +6,17 @@ import lombok.NoArgsConstructor;
 import ru.n1fex.markeazy.entity.OrderStatus;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderDto {
+public class OrderDetailsDto {
+
     private Long id;
     private Date date;
+
     private OrderStatus status;
-    private Integer amount;
-    private Integer totalSum;
+    private List<OrderProductDto> products;
+
 }

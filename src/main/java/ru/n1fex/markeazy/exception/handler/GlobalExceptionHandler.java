@@ -50,6 +50,12 @@ public class GlobalExceptionHandler {
         log.error(exception.getMessage());
         return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handle(EmptyOrderCartException exception) {
+        log.error(exception.getMessage());
+        return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

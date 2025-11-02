@@ -2,6 +2,7 @@ package ru.n1fex.markeazy.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.List;
@@ -25,7 +26,7 @@ public class Order {
     private OrderStatus status;
 
 
-    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER) //Подумать над выбором fetchType
+    @OneToMany(mappedBy = "pk.order") //Подумать над выбором fetchType
     private List<OrderProduct> products;
 
 }

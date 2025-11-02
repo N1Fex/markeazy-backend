@@ -1,6 +1,7 @@
 package ru.n1fex.markeazy.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,18 +19,24 @@ import ru.n1fex.markeazy.mapper.UserMapper;
 import ru.n1fex.markeazy.repository.UserRepository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
-    private final UserRepository userRepository;
-    private final RoleService roleService;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+
+    private final RoleService roleService;
+    private final CartService cartService;
+
+    private final UserRepository userRepository;
+
+    private final BCryptPasswordEncoder passwordEncoder;
 
 
     public Optional<User> findByEmail(String email) {
@@ -59,7 +66,11 @@ public class UserService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(Set.of(roleService.getUserRole()));
         user.setRegistrationDate(new Date());
-        return userRepository.save(user);
+
+        User savedUser = userRepository.save(user);
+        cartService.addProductsToCart(savedUser, userDto.getCartProducts() != null ? userDto.getCartProducts() : List.of());
+
+        return savedUser;
     }
 
     public User updateUser(String email, UserChangeInfoDto userDto) {

@@ -23,10 +23,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private final UserMapper userMapper;
+
     private final UserService userService;
+
     private final JwtTokenUtils jwtTokenUtils;
     private final AuthenticationManager authenticationManager;
-    private final UserMapper userMapper;
 
     public ResponseEntity<?> createAuthToken(@RequestBody JwtRequest authRequest) {
         authenticationManager.authenticate(

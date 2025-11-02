@@ -8,7 +8,7 @@ import ru.n1fex.markeazy.entity.Product;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
-    @Mapping(target="seller", expression = "java(product.getSeller().getName())")
+    //@Mapping(target="seller", expression = "java(product.getSeller().getName())")
     ProductCardDto toProductCardDto(Product product);
 
 }

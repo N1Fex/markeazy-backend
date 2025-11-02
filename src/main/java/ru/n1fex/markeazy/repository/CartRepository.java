@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 import ru.n1fex.markeazy.entity.Cart;
 import ru.n1fex.markeazy.entity.idcomposit.CartId;
 
+import java.util.Optional;
+
 @Repository
 public interface CartRepository extends JpaRepository<Cart, CartId> {
+    Integer deleteCartByUser_IdAndProduct_Id(Long userId, Long productId);
 }
