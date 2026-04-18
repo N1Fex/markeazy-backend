@@ -50,6 +50,13 @@ public class GlobalExceptionHandler {
         log.error(exception.getMessage());
         return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseError handle(OrderProductAmountExceedsInStockException exception) {
+        log.error(exception.getMessage(), exception);
+        return new ResponseError(HttpStatus.CONFLICT, exception.getMessage());
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseError handle(EmptyOrderCartException exception) {

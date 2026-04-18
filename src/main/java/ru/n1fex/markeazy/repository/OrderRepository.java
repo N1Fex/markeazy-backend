@@ -17,7 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "INNER JOIN orders_products op ON o.id = op.order_id " +
             "INNER JOIN order_status os ON o.status = os.id " +
             "WHERE o.consumer = :userId " +
-            "GROUP BY o.id, os.id " +
+            "GROUP BY o.id, os.id, o.date " +
+            "ORDER BY o.date DESC " +
             "LIMIT 5 OFFSET :indent",
         nativeQuery = true)
     List<Object[]> findByConsumer(@Param("userId") Long userId, @Param("indent") Integer offset);
