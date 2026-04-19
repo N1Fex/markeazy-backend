@@ -27,11 +27,11 @@ public class CartService {
     private final ProductRepository productRepository;
     private final CartRepository cartRepository;
 
-    private Cart createCart(User user, CartDto cartDto, Product product) {
+    private Cart createCart(User user, Integer quantity, Product product) {
         Cart cart = new Cart();
         cart.setUser(user);
         cart.setProduct(product);
-        cart.setQuantity(cartDto.getQuantity());
+        cart.setQuantity(quantity);
 
         CartId cartId = new CartId();
         cartId.setProductId(product.getId());
@@ -45,6 +45,17 @@ public class CartService {
         return user.getCartProducts().stream().map(cartMapper::toCartDto).toList();
     }
 
+    public CartDto changeProductQuantity(User user, Long productId, Integer quantity) {
+        Optional<Product> productOptional = productRepository.findById(productId);
+
+        if (productOptional.isPresent()) {
+            Product product = productOptional.get();
+            Cart cart = createCart(user, quantity, product);
+            return cartMapper.toCartDto(cartRepository.save(cart));
+        }
+        return null;
+    }
+
     @Transactional
     public List<CartDto> addProductsToCart(User user, List<CartDto> cartDtos) {
 
@@ -54,7 +65,7 @@ public class CartService {
 
                     if (productOptional.isPresent()) {
                         Product product = productOptional.get();
-                        return createCart(user, cartDto, product);
+                        return createCart(user, cartDto.getQuantity(), product);
                     }
                     return null;
                 }).filter(Objects::nonNull).toList();

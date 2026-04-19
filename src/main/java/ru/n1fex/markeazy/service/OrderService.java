@@ -11,9 +11,11 @@ import ru.n1fex.markeazy.dto.OrderProductDto;
 import ru.n1fex.markeazy.dto.OrderProductPlacementDto;
 import ru.n1fex.markeazy.entity.*;
 import ru.n1fex.markeazy.entity.idcomposit.OrderProductId;
+import ru.n1fex.markeazy.exception.OrderProductAmountExceedsInStockException;
 import ru.n1fex.markeazy.exception.SomethingWentWrongException;
 import ru.n1fex.markeazy.mapper.OrderMapper;
 import ru.n1fex.markeazy.mapper.OrderProductMapper;
+import ru.n1fex.markeazy.repository.CartRepository;
 import ru.n1fex.markeazy.repository.OrderProductRepository;
 import ru.n1fex.markeazy.repository.OrderRepository;
 import ru.n1fex.markeazy.repository.ProductRepository;
@@ -34,6 +36,7 @@ public class OrderService {
     private final OrderProductRepository orderProductRepository;
     private final OrderRepository orderRepository;
     private final OrderStatusService orderStatusService;
+    private final CartService cartService;
 
     @SneakyThrows
     public List<OrderProductDto> getOrderProducts(Long orderId, Long userId) {
@@ -87,6 +90,17 @@ public class OrderService {
                 .mapToObj(i -> {
                     Product product = products.get(i);
                     OrderProductPlacementDto opDto = productDtos.get(i);
+
+                    if (product.getAmount() < opDto.getQuantity()) {
+                        throw new OrderProductAmountExceedsInStockException(
+                                String.format(
+                                        "На складе не хватает товара для оформления заказа. Товар: %s (%d)",
+                                        product.getTitle(),
+                                        product.getId()
+                                )
+                        );
+                    }
+
                     OrderProduct orderProduct = new OrderProduct();
 
                     OrderProductId orderProductPk = new OrderProductId();
@@ -96,9 +110,13 @@ public class OrderService {
                     orderProduct.setPk(orderProductPk);
                     orderProduct.setQuantity(opDto.getQuantity());
                     orderProduct.setPrice(product.getPrice());
+
+                    cartService.removeProductFromCart(user, product.getId());
+
+                    product.setAmount(product.getAmount() - opDto.getQuantity());
+                    productRepository.save(product);
                     return orderProduct;
                 }).toList();
-
 
         Date now = new Date();
         order.setDate(now);

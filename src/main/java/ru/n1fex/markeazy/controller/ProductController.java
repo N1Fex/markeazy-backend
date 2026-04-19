@@ -7,9 +7,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.n1fex.markeazy.dto.ProductCardDto;
+import ru.n1fex.markeazy.dto.ProductDto;
 import ru.n1fex.markeazy.entity.Product;
 import ru.n1fex.markeazy.exception.MissedParameterOfRequestBody;
 import ru.n1fex.markeazy.exception.WrongParameterType;
+import ru.n1fex.markeazy.mapper.ProductMapper;
 import ru.n1fex.markeazy.service.ProductIndexingService;
 import ru.n1fex.markeazy.service.ProductService;
 
@@ -26,6 +28,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductIndexingService productIndexingService;
+    private final ProductMapper productMapper;
 
     @PostMapping(value = "/reindexAll")
     public ResponseEntity<?> reindexProducts() {
@@ -39,9 +42,10 @@ public class ProductController {
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Product> getProduct(@PathVariable("id") Long id) {
+    public ResponseEntity<ProductDto> getProduct(@PathVariable("id") Long id) {
         Optional<Product> product = productService.getProductById(id);
         return product
+                .map(productMapper::toProductDto)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

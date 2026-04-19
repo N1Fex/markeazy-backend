@@ -2,6 +2,7 @@ package ru.n1fex.markeazy.exception.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -50,11 +51,27 @@ public class GlobalExceptionHandler {
         log.error(exception.getMessage());
         return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseError handle(OrderProductAmountExceedsInStockException exception) {
+        log.error(exception.getMessage(), exception);
+        return new ResponseError(HttpStatus.CONFLICT, exception.getMessage());
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseError handle(EmptyOrderCartException exception) {
         log.error(exception.getMessage());
         return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseError handle(ReviewNotFoundException exception) {
+        log.error(exception.getMessage(), exception);
+        return new ResponseError(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler
@@ -63,4 +80,12 @@ public class GlobalExceptionHandler {
         log.error(exception.getMessage(), exception);
         return new ResponseError(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseError handle(AccessDeniedException exception) {
+        log.error(exception.getMessage(), exception);
+        return new ResponseError(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
 }

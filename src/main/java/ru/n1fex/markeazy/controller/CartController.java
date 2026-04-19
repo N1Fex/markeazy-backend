@@ -1,7 +1,6 @@
 package ru.n1fex.markeazy.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.n1fex.markeazy.dto.CartDto;
 import ru.n1fex.markeazy.entity.User;
@@ -47,6 +46,16 @@ public class CartController {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             return cartService.removeProductFromCart(user, productId);
+        }
+        throw new SomethingWentWrongException("Что-то пошло не так");
+    }
+
+    @PatchMapping
+    public CartDto changeProductQuantity(Principal principal, @RequestBody CartDto cartDto) {
+        Optional<User> userOptional = userService.findByEmail(principal.getName());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            return cartService.changeProductQuantity(user, cartDto.getProduct().getId(), cartDto.getQuantity());
         }
         throw new SomethingWentWrongException("Что-то пошло не так");
     }
