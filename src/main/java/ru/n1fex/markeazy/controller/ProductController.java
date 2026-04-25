@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.n1fex.markeazy.dto.ProductCardDto;
 import ru.n1fex.markeazy.dto.ProductDto;
@@ -30,6 +31,7 @@ public class ProductController {
     private final ProductIndexingService productIndexingService;
     private final ProductMapper productMapper;
 
+    @PreAuthorize("hasRole('SELLER')")
     @PostMapping(value = "/reindexAll")
     public ResponseEntity<?> reindexProducts() {
         productIndexingService.reindexAllProducts();
