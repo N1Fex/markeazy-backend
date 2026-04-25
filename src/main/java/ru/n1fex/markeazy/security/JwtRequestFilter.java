@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ru.n1fex.markeazy.entity.AccountType;
 import ru.n1fex.markeazy.util.JwtTokenUtils;
 
 import java.io.IOException;
@@ -29,27 +30,40 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
         String username = null;
         String jwtToken = null;
+        AccountType accountType = null;
+        Long accountId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwtToken = authHeader.substring(7);
 
             try {
                 username = jwtTokenUtils.getUsername(jwtToken);
+                accountType = jwtTokenUtils.getAccountType(jwtToken);
+                accountId = jwtTokenUtils.getAccountId(jwtToken);
             } catch (ExpiredJwtException e) {
-                log.debug("Время жизни токена вышло!");
+                log.debug("Token lifetime expired");
             } catch (SignatureException e) {
-                log.debug("Неверная подпись токена!");
+                log.debug("Invalid token signature");
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+            AuthPrincipal principal = new AuthPrincipal(
+                    accountId,
                     username,
                     null,
+                    null,
+                    accountType,
                     jwtTokenUtils.getRoles(jwtToken).stream().map(SimpleGrantedAuthority::new).toList()
+            );
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                    principal,
+                    null,
+                    principal.getAuthorities()
             );
             SecurityContextHolder.getContext().setAuthentication(token);
         }
+
         filterChain.doFilter(request, response);
     }
 }

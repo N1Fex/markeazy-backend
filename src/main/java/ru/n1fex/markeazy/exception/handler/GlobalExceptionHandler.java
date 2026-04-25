@@ -21,8 +21,22 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseError handle(SellerNotFoundException exception) {
+        log.error(exception.getMessage());
+        return new ResponseError(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseError handle(EmailAlreadyExistsException exception) {
+        log.error(exception.getMessage());
+        return new ResponseError(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseError handle(LoginAlreadyExistsException exception) {
         log.error(exception.getMessage());
         return new ResponseError(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
@@ -65,6 +79,12 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handle(WrongFileExtensionException exception) {
+        log.error(exception.getMessage());
+        return new ResponseError(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
 
 
     @ExceptionHandler

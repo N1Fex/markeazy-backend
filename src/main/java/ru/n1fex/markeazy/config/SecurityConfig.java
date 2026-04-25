@@ -19,19 +19,19 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.n1fex.markeazy.security.JwtRequestFilter;
-import ru.n1fex.markeazy.service.UserService;
+import ru.n1fex.markeazy.service.MarketplaceUserDetailsService;
 
 @EnableWebSecurity
 @EnableMethodSecurity
 @Configuration
 public class SecurityConfig {
 
-    private final UserService userService;
+    private final MarketplaceUserDetailsService marketplaceUserDetailsService;
     private final JwtRequestFilter jwtRequestFilter;
 
     @Autowired
-    public SecurityConfig(@Lazy UserService userService, JwtRequestFilter jwtRequestFilter) {
-        this.userService = userService;
+    public SecurityConfig(@Lazy MarketplaceUserDetailsService marketplaceUserDetailsService, JwtRequestFilter jwtRequestFilter) {
+        this.marketplaceUserDetailsService = marketplaceUserDetailsService;
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
@@ -40,9 +40,8 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests.requestMatchers("/auth", "/register",
-                                        "/product", "/product/search", "/product/list",
-                                        "/product/reindexAll").permitAll()
+                        authorizeRequests.requestMatchers("/auth", "/register", "/register/seller",
+                                        "/product", "/product/search", "/product/list").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
@@ -58,7 +57,7 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userService);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(marketplaceUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

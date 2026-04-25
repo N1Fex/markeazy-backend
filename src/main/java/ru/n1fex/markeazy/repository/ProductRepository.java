@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.n1fex.markeazy.entity.Product;
+import ru.n1fex.markeazy.entity.Seller;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p,s " +
             "FROM Product p " +
             "JOIN Seller s ON p.seller.id = s.id " +
+            "WHERE p.deleted = false " +
             "ORDER BY RANDOM() " +
             "LIMIT :limited")
     List<Product> getRandomProductsLimited(@Param("limited") int limit);
@@ -26,4 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "INNER JOIN Seller s ON p.seller.id = s.id " +
             "WHERE p.id IN :ids" )
     List<Product> getAllByIdIn(@Param("ids") List<Long> ids);
+
+    List<Product> findBySellerOrderBySeller(Seller seller, Pageable pageable);
 }

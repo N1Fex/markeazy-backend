@@ -3,7 +3,6 @@ package ru.n1fex.markeazy.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.n1fex.markeazy.entity.Seller;
 
 @Data
 @AllArgsConstructor
@@ -16,7 +15,8 @@ public class ProductDto {
     private int amount;
     private float rating;
     private int reviewsCount;
-    private Seller seller;
+    private Boolean deleted;
+    private SellerDto seller;
     private String description;
-    private byte[] image;
+    private String url;
 }

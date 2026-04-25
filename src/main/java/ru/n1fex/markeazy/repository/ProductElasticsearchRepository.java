@@ -36,6 +36,22 @@ public interface ProductElasticsearchRepository extends ElasticsearchRepository<
                         "boost": 2
                       }
                     }
+                  },
+                  {
+                    "match_phrase_prefix": {
+                      "title": {
+                        "query": "?0",
+                        "boost": 2
+                      }
+                    }
+                  },
+                  {
+                    "match_phrase_prefix": {
+                      "description": {
+                        "query": "?0",
+                        "boost": 1
+                      }
+                    }
                   }
                 ],
                 "minimum_should_match": 1
