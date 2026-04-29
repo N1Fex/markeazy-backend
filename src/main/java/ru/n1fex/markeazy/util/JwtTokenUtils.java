@@ -5,9 +5,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
-import ru.n1fex.markeazy.entity.User;
-import ru.n1fex.markeazy.entity.Role;
+import ru.n1fex.markeazy.entity.AccountType;
+import ru.n1fex.markeazy.security.AuthPrincipal;
 
 import java.security.Key;
 import java.time.Duration;
@@ -26,13 +27,14 @@ public class JwtTokenUtils {
     private Duration lifetime;
 
 
-    public String generateToken(User user) {
+    public String generateToken(AuthPrincipal principal) {
         Map<String, Object> claims = new HashMap<>();
 
-        List<String> roles = user.getRoles().stream().map(Role::getName).toList();
+        List<String> roles = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
         claims.put("roles", roles);
-        claims.put("name", user.getName());
-        claims.put("registration_date", user.getRegistrationDate());
+        claims.put("name", principal.getName());
+        claims.put("accountType", principal.getAccountType().name());
+        claims.put("accountId", principal.getId());
 
         Date now = new Date();
         Date expDate = new Date(now.getTime() + lifetime.toMillis());
@@ -41,7 +43,7 @@ public class JwtTokenUtils {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getEmail())
+                .setSubject(principal.getUsername())
                 .setIssuedAt(now)
                 .setExpiration(expDate)
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -55,6 +57,15 @@ public class JwtTokenUtils {
 
     public List<String> getRoles(String token) {
         return getClaimsFromToken(token).get("roles", List.class);
+    }
+
+    public AccountType getAccountType(String token) {
+        return AccountType.valueOf(getClaimsFromToken(token).get("accountType", String.class));
+    }
+
+    public Long getAccountId(String token) {
+        Number accountId = getClaimsFromToken(token).get("accountId", Number.class);
+        return accountId != null ? accountId.longValue() : null;
     }
 
     public Claims getClaimsFromToken(String token) {

@@ -5,15 +5,20 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ru.n1fex.markeazy.dto.ProductCardDto;
 import ru.n1fex.markeazy.dto.ProductDto;
 import ru.n1fex.markeazy.entity.Product;
-import ru.n1fex.markeazy.exception.MissedParameterOfRequestBody;
-import ru.n1fex.markeazy.exception.WrongParameterType;
+import ru.n1fex.markeazy.entity.Seller;
+import ru.n1fex.markeazy.exception.*;
 import ru.n1fex.markeazy.mapper.ProductMapper;
-import ru.n1fex.markeazy.service.ProductIndexingService;
+import ru.n1fex.markeazy.security.AuthPrincipal;
 import ru.n1fex.markeazy.service.ProductService;
+import ru.n1fex.markeazy.service.SellerService;
 
 import java.util.List;
 import java.util.Map;
@@ -27,13 +32,70 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductService productService;
-    private final ProductIndexingService productIndexingService;
     private final ProductMapper productMapper;
+    private final SellerService sellerService;
 
-    @PostMapping(value = "/reindexAll")
-    public ResponseEntity<?> reindexProducts() {
-        productIndexingService.reindexAllProducts();
-        return ResponseEntity.ok().build();
+    @PreAuthorize("hasRole('SELLER')")
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductDto changeProduct(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long id,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) Integer amount,
+            @RequestParam(required = false) Integer price,
+            @RequestParam(required = false) Integer discount
+    ) throws Exception {
+        Product product = productService.getProductById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Товар с ID = %d не найден.".formatted(id)));
+        if (image != null) {
+            String extension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
+            if (!extension.equals(".jpg") && !extension.equals(".png")) {
+                throw new WrongFileExtensionException("Файл должен иметь расширение png или jpg.");
+            }
+        }
+        Seller seller = sellerService
+                .findById(principal.getId())
+                .orElseThrow(() -> new SomethingWentWrongException("Что-то пошло не так"));
+        return productMapper.toProductDto(productService.changeProduct(seller, product, title, description, amount, price, discount, image));
+    }
+
+    @PreAuthorize("hasRole('SELLER')")
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteProduct(@AuthenticationPrincipal AuthPrincipal authPrincipal, @PathVariable long id) {
+        Seller seller = sellerService
+                .findById(authPrincipal.getId())
+                .orElseThrow(() -> new SomethingWentWrongException("Что-то пошло не так"));
+        Product product = productService.getProductById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Товар с ID = %d не найден.".formatted(id)));
+        if (product.getSeller() != seller) {
+            throw new AccessDeniedException("Вы не можете управлять товаром другого продавца.");
+        }
+
+        productService.deleteProduct(seller, product);
+        return ResponseEntity.ok("Товар успешно удален!");
+    }
+
+    @PreAuthorize("hasRole('SELLER')")
+    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductDto addProduct(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestPart("image") MultipartFile image,
+            @RequestParam String title,
+            @RequestParam String description,
+            @RequestParam Integer amount,
+            @RequestParam Integer price,
+            @RequestParam Integer discount
+        ) throws Exception {
+        String extension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
+        if (!extension.equals(".jpg") && !extension.equals(".png")) {
+            throw new WrongFileExtensionException("Файл должен иметь расширение png или jpg.");
+        }
+        Seller seller = sellerService
+                .findById(principal.getId())
+                .orElseThrow(() -> new SomethingWentWrongException("Что-то пошло не так"));
+        return productMapper.toProductDto(productService.addProduct(seller, title, description, amount, price, discount, image));
     }
 
     @GetMapping(value = {"", "/"}, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -45,7 +107,10 @@ public class ProductController {
     public ResponseEntity<ProductDto> getProduct(@PathVariable("id") Long id) {
         Optional<Product> product = productService.getProductById(id);
         return product
-                .map(productMapper::toProductDto)
+                .map(p -> {
+                    p.setObjectKey(productService.getPresignedUrl(p));
+                    return productMapper.toProductDto(p);
+                })
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

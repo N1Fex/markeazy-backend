@@ -20,7 +20,10 @@ public class Product {
     @Column(name = "reviews_count")
     private int reviewsCount;
     private int amount;
+    @Column(length = 2000)
     private String description;
+    private String objectKey;
+    private Boolean deleted;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "seller_id")
