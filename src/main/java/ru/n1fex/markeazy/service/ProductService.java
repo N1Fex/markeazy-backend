@@ -128,6 +128,7 @@ public class ProductService {
         product.setRating(0);
         product.setReviewsCount(0);
         product.setObjectKey(objectKey);
+        product.setDeleted(false);
 
         Product savedProduct = productRepository.save(product);
         savedProduct.setObjectKey(getPresignedUrl(savedProduct));
