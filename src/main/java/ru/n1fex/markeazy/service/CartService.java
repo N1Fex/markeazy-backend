@@ -25,6 +25,7 @@ public class CartService {
     private final ProductMapper productMapper;
 
     private final ProductRepository productRepository;
+    private final ProductService productService;
     private final CartRepository cartRepository;
 
     private Cart createCart(User user, Integer quantity, Product product) {
@@ -42,7 +43,10 @@ public class CartService {
     }
 
     public List<CartDto> getCart(User user) {
-        return user.getCartProducts().stream().map(cartMapper::toCartDto).toList();
+        return user.getCartProducts().stream().map(c -> {
+            c.getProduct().setObjectKey(productService.getPresignedUrl(c.getProduct()));
+            return cartMapper.toCartDto(c);
+        }).toList();
     }
 
     public CartDto changeProductQuantity(User user, Long productId, Integer quantity) {
